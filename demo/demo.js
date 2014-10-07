@@ -14,13 +14,13 @@ angular.module('demo', ['ngCropper'])
   $scope.onFile = function(blob) {
     Cropper.encode((file = blob)).then(function(dataUrl) {
       $scope.dataUrl = dataUrl;
-      $timeout(showCropper);  // need $digest to set image's src before
+      $timeout(showCropper);  // wait for $digest to set image's src
     });
   };
 
   /**
    * When there is a cropped image to show encode it to base64 string and
-   * use a source for image element.
+   * use as a source for an image element.
    */
   $scope.preview = function() {
     if (!file || !data) return;
@@ -30,7 +30,7 @@ angular.module('demo', ['ngCropper'])
   };
 
   /**
-   * Object is used to pass options to initalize cropper.
+   * Object is used to pass options to initalize a cropper.
    * More on options - https://github.com/fengyuanchen/cropper#options
    */
   $scope.options = {
@@ -40,11 +40,11 @@ angular.module('demo', ['ngCropper'])
   };
 
   /**
-   * Showing (initializing) and hiding (destroying) of cropper are started by
+   * Showing (initializing) and hiding (destroying) of a cropper are started by
    * events. The scope of the `ng-cropper` directive is derived from the scope of
-   * the controller. When initializing `ng-cropper` directive adds two handlers
-   * listening to events passed by attributes `ng-show` and `ng-hide`.
-   * To show or hide a cropper `$broadcast` proper event.
+   * the controller. When initializing the `ng-cropper` directive adds two handlers
+   * listening to events passed by `ng-show` & `ng-hide` attributes.
+   * To show or hide a cropper `$broadcast` a proper event.
    */
   $scope.showEvent = 'show';
   $scope.hideEvent = 'hide';
