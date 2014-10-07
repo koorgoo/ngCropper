@@ -2,14 +2,40 @@
 
 AngularJS module for https://github.com/fengyuanchen/cropper jQuery plugin.
 
+
 ### Install
 
 ```bash
 bower install ng-cropper
 ```
 
+
 ### Usage
 
-Include ``dist/ngCropper.all.js`` and ``dist/ngCropper.all.css`` (or only ``dist/ngCropper.js`` if you have cropper already).
+```html
+<link href="client/bower_components/ngCropper/dist/ngCropper.all.css" rel="stylesheet">
+<script src="client/bower_components/ngCropper/dist/ngCropper.all.js"></script>
+```
 
-TODO: example
+```javascript
+var app = angular.module('app', ['ngCropper'])
+
+app.controller('Main', function(Cropper) {
+    ...
+});
+```
+
+```html
+<img src="image.jpg" 
+     ng-cropper
+     ng-options="options"
+     ng-show="show.cropper"
+     ng-hide="hide.cropper">
+```
+
+Read [Demo code](http://github.com/koorgoo/ngCropper) for detailed example.
+
+
+### API
+
+TODO
