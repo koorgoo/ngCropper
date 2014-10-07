@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ngCropper Demo</title>
+  <script src="../client/bower_components/jquery/dist/jquery.min.js"></script>
+  <script src="../client/bower_components/angular/angular.min.js"></script>
+  <script src="../dist/ngCropper.all.js"></script>
+  <link rel="stylesheet" href="../dist/ngCropper.all.css">
+  <script src="../client/bower_components/mocha/mocha.js"></script>
+  <link rel="stylesheet" href="../client/bower_components/mocha/mocha.css">
+  <script src="../client/bower_components/chai/chai.js"></script>
+</head>
+<body>
+  <div id="mocha"></div>
+  <script>
+    mocha.setup('bdd')
+    assert = chai.assert;
+  </script>
+  <script src="ngCropper.spec.js"></script>
+  <script>mocha.run();</script>
+</body>
+</html>
