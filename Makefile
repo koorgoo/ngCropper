@@ -1,8 +1,8 @@
 MINIFY=node_modules/minify/bin/minify.js
-CROPPER_JS=client/bower_components/cropper/dist/cropper.js
-CROPPER_CSS=client/bower_components/cropper/dist/cropper.css
+CROPPER_JS=cropper/dist/cropper.js
+CROPPER_CSS=cropper/dist/cropper.css
 
-prepare:
+prep:
 	bower install
 	npm install
 
