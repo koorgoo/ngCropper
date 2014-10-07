@@ -58,8 +58,8 @@ angular.module('ngCropper', ['ng'])
       image.src = dataUrl;
 
       context.drawImage(image, data.x, data.y, data.width, data.height, 0, 0, data.width, data.height);
+      
       var encoded = canvas.toDataURL(file.type);
-
       var blob = _decode(encoded);
 
       defer.resolve(blob);
