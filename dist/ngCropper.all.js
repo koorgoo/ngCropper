@@ -1114,25 +1114,23 @@
 (function() {
 'use strict';
 
-angular.module('ngCropper', [])
+angular.module('ngCropper', ['ng'])
 .directive('ngCropper', function() {
   return {
     restrict: 'A',
-    scope: {onDone: '=ngDone'},
-    link: function(scope, element, attrs) {
-      var showEvent = attrs.ngShowEvent;
-      var hideEvent = attrs.ngHideEvent;
+    scope: {options: '=ngOptions'},
+    link: function(scope, element, atts) {
+      var shown = false;
 
-      var opts = angular.extend({
-        aspectRatio: 'auto',
-        done: scope.onDone || angular.noop
-      }, attrs);
-
-      scope.$on(showEvent, function() {
-        element.cropper(opts);
+      scope.$on(atts.ngShow, function() {
+        if (shown) return;
+        shown = true;
+        element.cropper(scope.options || {});
       });
 
-      scope.$on(hideEvent, function() {
+      scope.$on(atts.ngHide, function() {
+        if (!shown) return;
+        shown = false;
         element.cropper('destroy');
       });
     }

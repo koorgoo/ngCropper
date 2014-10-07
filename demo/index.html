@@ -4,21 +4,22 @@
   <title>ngCropper Demo</title>
   <script src="../client/bower_components/jquery/dist/jquery.min.js"></script>
   <script src="../client/bower_components/angular/angular.min.js"></script>
-  <script src="../dist/ngCropper.all.js"></script>
-  <link rel="stylesheet" href="../dist/ngCropper.all.css">
+  <script src="../cropper/dist/cropper.js"></script>
+  <link href="../cropper/dist/cropper.css" rel="stylesheet">
+  <script src="../ngCropper.js"></script>
   <script src="./demo.js"></script>
-  <link rel="stylesheet" href="./demo.css">
+  <link href="./demo.css" rel="stylesheet">
 </head>
 <body ng-controller="UploadController">
 
   <input type="file" value="Upload image" onchange="angular.element(this).scope().onFile(this.files[0])">
-  <button ng-click="showPreview()">Show preview</button>
+  <button ng-click="preview()">Show preview</button>
 
   <br />
 
   <div ng-if="dataUrl" class="img-container">
     <img ng-if="dataUrl" ng-src="{{dataUrl}}" width="800" 
-         ng-cropper ng-show-event="{{showCropperEvent}}" ng-hide-event="{{hideCropperEvent}}" ng-done="onSelection">
+         ng-cropper ng-show="{{showEvent}}" ng-hide="{{hideEvent}}" ng-options="options">
   </div>
 
   <div class="preview-container">

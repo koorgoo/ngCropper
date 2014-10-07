@@ -3,8 +3,7 @@
 
 angular.module('demo', ['ngCropper'])
 .controller('UploadController', function($scope, $timeout, Cropper) {
-  var file = null;
-  var crop = null;
+  var file, crop;
 
   $scope.onFile = function(blob) {
     Cropper.encode((file = blob)).then(function(dataUrl) {
@@ -13,21 +12,22 @@ angular.module('demo', ['ngCropper'])
     });
   };
 
-  $scope.onSelection = function(data) {
+  function onDone(data) {
     Cropper.crop(file, data).then(function(blob) { crop = blob; });
   };
 
-  $scope.showPreview = function() {
+  $scope.preview = function() {
     Cropper.encode(crop).then(function(dataUrl) {
       ($scope.preview || ($scope.preview = {})).dataUrl = dataUrl;
     })
   };
 
-  $scope.showCropperEvent = 'showCropper';
-  $scope.hideCropperEvent = 'hideCropper';
+  $scope.options = {done: onDone};
+  $scope.showEvent = 'show';
+  $scope.hideEvent = 'hide';
 
-  function showCropper() { $scope.$broadcast($scope.showCropperEvent); }
-  function hideCropper() { $scope.$broadcast($scope.hideCropperEvent); }
+  function showCropper() { $scope.$broadcast($scope.showEvent); }
+  function hideCropper() { $scope.$broadcast($scope.hideEvent); }
 
 });
 
