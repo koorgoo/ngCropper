@@ -18,7 +18,7 @@ bower install ng-cropper
 ```
 
 ```javascript
-var app = angular.module('app', ['ngCropper'])
+var app = angular.module('app', ['ngCropper']);
 
 app.controller('Main', function(Cropper) {
     ...
@@ -26,16 +26,17 @@ app.controller('Main', function(Cropper) {
 ```
 
 ```html
-<img src="image.jpg" 
+<img src="image.jpg"
      ng-cropper
      ng-options="options"
      ng-show="show.cropper"
      ng-hide="hide.cropper">
 ```
 
-Read [Demo code](http://github.com/koorgoo/ngCropper) for detailed example.
+Read [Demo code](http://github.com/koorgoo/ngCropper/tree/master/demo) for detailed example.
+
 
 
 ### API
 
-TODO
+Look at [demo.js](http://github.com/koorgoo/ngCropper/tree/master/demo/demo.js) to learn workflow.

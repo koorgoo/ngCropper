@@ -1,6 +1,7 @@
 MINIFY=node_modules/minify/bin/minify.js
 CROPPER_JS=cropper/dist/cropper.js
 CROPPER_CSS=cropper/dist/cropper.css
+BROWSER=open -a "/Applications/Google Chrome.app"
 
 prep:
 	bower install
@@ -17,6 +18,9 @@ dist:
 	$(MINIFY) dist/ngCropper.all.css > dist/ngCropper.all.min.css
 
 test:
-	open -a "/Applications/Google Chrome.app" test/index.html
+	$(BROWSER) test/index.html
 
-.PHONY: prepare dist test
+demo:
+	$(BROWSER) demo/index.html
+
+.PHONY: prepare dist test demo

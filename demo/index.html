@@ -12,13 +12,13 @@
 </head>
 <body ng-controller="UploadController">
 
-  <input type="file" value="Upload image" onchange="angular.element(this).scope().onFile(this.files[0])">
+  <input type="file" onchange="angular.element(this).scope().onFile(this.files[0])">
   <button ng-click="preview()">Show preview</button>
 
   <br />
 
   <div ng-if="dataUrl" class="img-container">
-    <img ng-if="dataUrl" ng-src="{{dataUrl}}" width="800" 
+    <img ng-if="dataUrl" ng-src="{{dataUrl}}" width="800"
          ng-cropper ng-show="{{showEvent}}" ng-hide="{{hideEvent}}" ng-options="options">
   </div>
 
