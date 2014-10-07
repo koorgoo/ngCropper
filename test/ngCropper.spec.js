@@ -3,6 +3,12 @@ var pixel = "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBA
 
 describe('ngCropper', function() {
 
+  function getImage(dataUrl) {
+    var image = new Image();
+    image.src = dataUrl;
+    return image;
+  }
+
   describe('Cropper service', function() {
     var Cropper = injector.get('Cropper');
 
@@ -37,10 +43,67 @@ describe('ngCropper', function() {
         promise.then(function(blob) {
           assert.instanceOf(blob, Blob);
           done();
-        })
+        });
       });
     });
 
+
+    describe('scale()', function() {
+      var blob = Cropper.decode(pixel);
+
+      it('return promise resolved with blob', function(done) {
+        var promise = Cropper.scale(blob, {width: 2});
+        assert.isFunction(promise.then);
+        promise.then(function(blob) {
+          assert.instanceOf(blob, Blob);
+          done();
+        });
+      });
+
+      it('accept Number ratio', function(done) {
+        Cropper.scale(blob, 2)  // = 4 pixels 
+        .then(Cropper.encode)
+        .then(function(dataUrl) {
+          var img = getImage(dataUrl);
+          assert.equal(img.width, 2); 
+          assert.equal(img.height, 2);
+          done();
+        });
+      });
+
+      it('accept Object data', function(done) {
+        Cropper.scale(blob, {width: 4, height: 2})  // = 8 pixels 
+        .then(Cropper.encode)
+        .then(function(dataUrl) {
+          var img = getImage(dataUrl);
+          assert.equal(img.width, 4); 
+          assert.equal(img.height, 2);
+          done();
+        });
+      });
+
+      it('calculate width if height passed', function(done) {
+        Cropper.scale(blob, {height: 2})  // = 4 pixels 
+        .then(Cropper.encode)
+        .then(function(dataUrl) {
+          var img = getImage(dataUrl);
+          assert.equal(img.width, 2); 
+          assert.equal(img.height, 2);
+          done();
+        });
+      });
+
+      it('calculate height if with passed', function(done) {
+        Cropper.scale(blob, {width: 2})  // = 4 pixels 
+        .then(Cropper.encode)
+        .then(function(dataUrl) {
+          var img = getImage(dataUrl);
+          assert.equal(img.width, 2); 
+          assert.equal(img.height, 2);
+          done();
+        });
+      });
+    });
   });
 
 });

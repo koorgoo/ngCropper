@@ -29,6 +29,16 @@ angular.module('demo', ['ngCropper'])
     });
   };
 
+  $scope.scale = function(width) {
+    Cropper.crop(file, data)
+      .then(function(blob) {
+        return Cropper.scale(blob, {width: width});
+      })
+      .then(Cropper.encode).then(function(dataUrl) {
+        ($scope.preview || ($scope.preview = {})).dataUrl = dataUrl;
+      });
+  }
+
   /**
    * Object is used to pass options to initalize a cropper.
    * More on options - https://github.com/fengyuanchen/cropper#options
