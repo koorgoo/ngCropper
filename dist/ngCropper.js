@@ -48,7 +48,6 @@ angular.module('ngCropper', ['ng'])
 
   this.crop = function(file, data) {
     var defer = $q.defer();
-    var type = file.type;
     var _decode = this.decode;
     
     this.encode(file).then(function(dataUrl) {
@@ -58,8 +57,8 @@ angular.module('ngCropper', ['ng'])
       image.src = dataUrl;
 
       context.drawImage(image, data.x, data.y, data.width, data.height, 0, 0, data.width, data.height);
+      
       var encoded = canvas.toDataURL(file.type);
-
       var blob = _decode(encoded);
 
       defer.resolve(blob);
@@ -68,6 +67,53 @@ angular.module('ngCropper', ['ng'])
 
     return defer.promise;
   };
+
+  this.scale = function(file, data) {
+    var defer = $q.defer();
+    var _decode = this.decode;
+    
+    this.encode(file).then(function(dataUrl) {
+      var image = new Image();
+      image.src = dataUrl;
+
+      var heightOrig = image.height;
+      var widthOrig = image.width;
+      var ratio, height, width;
+
+      if (angular.isNumber(data)) {
+        ratio = data;
+        height = heightOrig * ratio;
+        width = widthOrig * ratio;
+      }
+
+      if (angular.isObject(data)) {
+        ratio = widthOrig / heightOrig;
+        height = data.height;
+        width = data.width;
+
+        if (height && !width)
+          width = height * ratio;
+        else if (width && !height)
+          height = width / ratio;
+      }
+
+      var canvas = createCanvas(data);
+      var context = canvas.getContext('2d');
+
+      canvas.height = height;
+      canvas.width = width;
+
+      context.drawImage(image, 0, 0, widthOrig, heightOrig, 0, 0, width, height);
+      
+      var encoded = canvas.toDataURL(file.type);
+      var blob = _decode(encoded);
+
+      defer.resolve(blob);
+      removeElement(canvas);
+    });
+
+    return defer.promise;
+  }
 
 
   function createCanvas(data) {
