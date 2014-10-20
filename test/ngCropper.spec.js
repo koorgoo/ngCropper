@@ -1,12 +1,15 @@
 var injector = angular.injector(['ngCropper']);
 var pixel = "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=";
 
+
 describe('ngCropper', function() {
 
-  function getImage(dataUrl) {
-    var image = new Image();
-    image.src = dataUrl;
-    return image;
+  function createImage(source) {
+    var defer = injector.get('$q').defer();
+    var img = new Image();
+    img.src = source;
+    img.onload = function(e) { defer.resolve(e.target); };
+    return defer.promise;
   }
 
   describe('Cropper service', function() {
@@ -62,9 +65,8 @@ describe('ngCropper', function() {
 
       it('accept Number ratio', function(done) {
         Cropper.scale(blob, 2)  // = 4 pixels 
-        .then(Cropper.encode)
-        .then(function(dataUrl) {
-          var img = getImage(dataUrl);
+        .then(Cropper.encode).then(createImage)
+        .then(function(img) {
           assert.equal(img.width, 2); 
           assert.equal(img.height, 2);
           done();
@@ -73,9 +75,8 @@ describe('ngCropper', function() {
 
       it('accept Object data', function(done) {
         Cropper.scale(blob, {width: 4, height: 2})  // = 8 pixels 
-        .then(Cropper.encode)
-        .then(function(dataUrl) {
-          var img = getImage(dataUrl);
+        .then(Cropper.encode).then(createImage)
+        .then(function(img) {
           assert.equal(img.width, 4); 
           assert.equal(img.height, 2);
           done();
@@ -84,9 +85,8 @@ describe('ngCropper', function() {
 
       it('calculate width if height passed', function(done) {
         Cropper.scale(blob, {height: 2})  // = 4 pixels 
-        .then(Cropper.encode)
-        .then(function(dataUrl) {
-          var img = getImage(dataUrl);
+        .then(Cropper.encode).then(createImage)
+        .then(function(img) {
           assert.equal(img.width, 2); 
           assert.equal(img.height, 2);
           done();
@@ -95,9 +95,8 @@ describe('ngCropper', function() {
 
       it('calculate height if with passed', function(done) {
         Cropper.scale(blob, {width: 2})  // = 4 pixels 
-        .then(Cropper.encode)
-        .then(function(dataUrl) {
-          var img = getImage(dataUrl);
+        .then(Cropper.encode).then(createImage)
+        .then(function(img) {
           assert.equal(img.width, 2); 
           assert.equal(img.height, 2);
           done();

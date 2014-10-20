@@ -28,8 +28,8 @@ angular.module('ngCropper', ['ng'])
   this.encode = function(blob) {
     var defer = $q.defer();
     var reader = new FileReader();
-    reader.onload = function() {
-      defer.resolve(reader.result);
+    reader.onload = function(e) {
+      defer.resolve(e.target.result);
     };
     reader.readAsDataURL(blob);
     return defer.promise;
@@ -72,10 +72,7 @@ angular.module('ngCropper', ['ng'])
     var defer = $q.defer();
     var _decode = this.decode;
     
-    this.encode(file).then(function(dataUrl) {
-      var image = new Image();
-      image.src = dataUrl;
-
+    this.encode(file).then(_createImage).then(function(image) {
       var heightOrig = image.height;
       var widthOrig = image.width;
       var ratio, height, width;
@@ -113,8 +110,16 @@ angular.module('ngCropper', ['ng'])
     });
 
     return defer.promise;
-  }
+  };
 
+
+  function _createImage(source) {
+    var defer = $q.defer();
+    var image = new Image();
+    image.onload = function(e) { defer.resolve(e.target); };
+    image.src = source;
+    return defer.promise;
+  }
 
   function createCanvas(data) {
     var canvas = document.createElement('canvas');
