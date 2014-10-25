@@ -2,7 +2,7 @@
 'use strict';
 
 angular.module('ngCropper', ['ng'])
-.directive('ngCropper', function() {
+.directive('ngCropper', ['$q', function($q) {
   return {
     restrict: 'A',
     scope: {options: '=ngOptions'},
@@ -12,7 +12,11 @@ angular.module('ngCropper', ['ng'])
       scope.$on(atts.ngShow, function() {
         if (shown) return;
         shown = true;
-        element.cropper(scope.options || {});
+
+        preprocess(scope.options, element[0])
+          .then(function(options) {
+            element.cropper(options);
+          })
       });
 
       scope.$on(atts.ngHide, function() {
@@ -22,7 +26,64 @@ angular.module('ngCropper', ['ng'])
       });
     }
   };
-})
+
+  function preprocess(options, img) {
+    options = options || {};
+
+    var defer = $q.defer();
+    var toResolve = [passInitial(options)];
+
+    if (options.maximize) toResolve.push(maximizeSelection(options, img));
+
+    $q.all(toResolve).then(function(values) {
+      var lastUpdatedOptions = values[values.length-1];
+      defer.resolve(lastUpdatedOptions); 
+    });
+
+    return defer.promise;
+  }
+
+  /**
+   * The only promise to resolve when no more processing promiseses passed.
+   */
+  function passInitial(options) {
+    var defer = $q.defer();
+    defer.resolve(options);
+    return defer.promise;
+  }
+
+  /**
+   * Change options to make selection maximum for the image.
+   * fengyuanchen/cropper calculates valid selection's height & width 
+   * with respect to `aspectRatio`.
+   */
+  function maximizeSelection(options, img) {
+    var defer = $q.defer();
+
+    getRealSize(img).then(function(size) {
+      options.data = size;
+      defer.resolve(options);
+    });
+
+    return defer.promise;
+  }
+
+  /**
+   * Returns real image size (without changes by css, attributes).
+   */
+  function getRealSize(img) {
+    var defer = $q.defer();
+    var size = {height: null, width: null};
+    var image = new Image();
+    
+    image.onload = function() {
+      defer.resolve({width: image.width, height: image.height});
+    }
+
+    image.src = img.src;
+    return defer.promise;
+  }
+}])
 .service('Cropper', ['$q', function($q) {
 
   this.encode = function(blob) {
