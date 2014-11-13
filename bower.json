@@ -1,7 +1,10 @@
 {
   "name": "ng-cropper",
-  "main": "ngCropper.js",
-  "version": "0.2.0",
+  "main": [
+    "dist/ngCropper.all.js",
+    "dist/ngCropper.all.css"
+  ],
+  "version": "0.2.1",
   "homepage": "https://github.com/koorgoo/ngCropper",
   "authors": [
     "Dima Kurguzov <koorgoo@gmail.com>"

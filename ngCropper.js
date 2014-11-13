@@ -37,7 +37,7 @@ angular.module('ngCropper', ['ng'])
 
     $q.all(toResolve).then(function(values) {
       var lastUpdatedOptions = values[values.length-1];
-      defer.resolve(lastUpdatedOptions); 
+      defer.resolve(lastUpdatedOptions);
     });
 
     return defer.promise;
@@ -54,7 +54,7 @@ angular.module('ngCropper', ['ng'])
 
   /**
    * Change options to make selection maximum for the image.
-   * fengyuanchen/cropper calculates valid selection's height & width 
+   * fengyuanchen/cropper calculates valid selection's height & width
    * with respect to `aspectRatio`.
    */
   function maximizeSelection(options, img) {
@@ -75,7 +75,7 @@ angular.module('ngCropper', ['ng'])
     var defer = $q.defer();
     var size = {height: null, width: null};
     var image = new Image();
-    
+
     image.onload = function() {
       defer.resolve({width: image.width, height: image.height});
     }
@@ -104,21 +104,19 @@ angular.module('ngCropper', ['ng'])
     for (var i = 0; i < binary.length; i++) {
         array[i] = binary.charCodeAt(i);
     }
-    return new Blob([array], {type: type}); 
+    return new Blob([array], {type: type});
   };
 
   this.crop = function(file, data) {
     var defer = $q.defer();
     var _decode = this.decode;
-    
-    this.encode(file).then(function(dataUrl) {
+
+    this.encode(file).then(_createImage).then(function(image) {
       var canvas = createCanvas(data);
       var context = canvas.getContext('2d');
-      var image = new Image();
-      image.src = dataUrl;
 
       context.drawImage(image, data.x, data.y, data.width, data.height, 0, 0, data.width, data.height);
-      
+
       var encoded = canvas.toDataURL(file.type);
       var blob = _decode(encoded);
 
@@ -132,7 +130,7 @@ angular.module('ngCropper', ['ng'])
   this.scale = function(file, data) {
     var defer = $q.defer();
     var _decode = this.decode;
-    
+
     this.encode(file).then(_createImage).then(function(image) {
       var heightOrig = image.height;
       var widthOrig = image.width;
@@ -162,7 +160,7 @@ angular.module('ngCropper', ['ng'])
       canvas.width = width;
 
       context.drawImage(image, 0, 0, widthOrig, heightOrig, 0, 0, width, height);
-      
+
       var encoded = canvas.toDataURL(file.type);
       var blob = _decode(encoded);
 
