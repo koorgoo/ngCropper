@@ -1,5 +1,5 @@
 /*!
- * Cropper v0.6.1
+ * Cropper v0.7.2
  * https://github.com/fengyuanchen/cropper
  *
  * Copyright 2014 Fengyuan Chen
@@ -7,6 +7,8 @@
  */
 
 .cropper-container {
+  position: relative;
+  overflow: hidden;
   -webkit-user-select: none;
      -moz-user-select: none;
       -ms-user-select: none;
@@ -16,15 +18,11 @@
   -webkit-touch-callout: none;
 }
 
-.cropper-container {
-  position: relative;
-  overflow: hidden;
-  background-color: #fff;
-}
-
-.cropper-container > img {
+.cropper-container img {
   width: 100%;
+  max-width: none !important;
   height: 100%;
+  max-height: none !important;
 }
 
 .cropper-modal,
@@ -36,17 +34,16 @@
   left: 0;
 }
 
+.cropper-canvas {
+  background-color: #fff;
+  filter: alpha(opacity=0);
+  opacity: 0;
+}
+
 .cropper-modal {
   background-color: #000;
   filter: alpha(opacity=50);
   opacity: .5;
-}
-
-.cropper-canvas {
-  cursor: crosshair;
-  background-color: #fff;
-  filter: alpha(opacity=0);
-  opacity: 0;
 }
 
 .cropper-dragger {
@@ -66,12 +63,6 @@
   outline-style: solid;
   outline-color: #69f;
   outline-color: rgba(51, 102, 255, .75);
-  outline-offset: -1px;
-}
-
-.cropper-viewer > img {
-  max-width: none !important;
-  max-height: none !important;
 }
 
 .cropper-dashed {
@@ -124,13 +115,13 @@
 
 .cropper-line.line-e {
   top: 0;
-  right: -2px;
+  right: -3px;
   width: 5px;
   cursor: e-resize;
 }
 
 .cropper-line.line-n {
-  top: -2px;
+  top: -3px;
   left: 0;
   height: 5px;
   cursor: n-resize;
@@ -138,13 +129,13 @@
 
 .cropper-line.line-w {
   top: 0;
-  left: -2px;
+  left: -3px;
   width: 5px;
   cursor: w-resize;
 }
 
 .cropper-line.line-s {
-  bottom: -2px;
+  bottom: -3px;
   left: 0;
   height: 5px;
   cursor: s-resize;
@@ -159,50 +150,54 @@
 }
 
 .cropper-point.point-e {
-  top: 49%;
-  right: -2px;
+  top: 50%;
+  right: -3px;
+  margin-top: -3px;
   cursor: e-resize;
 }
 
 .cropper-point.point-n {
-  top: -2px;
-  left: 49%;
+  top: -3px;
+  left: 50%;
+  margin-left: -3px;
   cursor: n-resize;
 }
 
 .cropper-point.point-w {
-  top: 49%;
-  left: -2px;
+  top: 50%;
+  left: -3px;
+  margin-top: -3px;
   cursor: w-resize;
 }
 
 .cropper-point.point-s {
-  bottom: -2px;
-  left: 49%;
+  bottom: -3px;
+  left: 50%;
+  margin-left: -3px;
   cursor: s-resize;
 }
 
 .cropper-point.point-ne {
-  top: -2px;
-  right: -2px;
+  top: -3px;
+  right: -3px;
   cursor: ne-resize;
 }
 
 .cropper-point.point-nw {
-  top: -2px;
-  left: -2px;
+  top: -3px;
+  left: -3px;
   cursor: nw-resize;
 }
 
 .cropper-point.point-sw {
-  bottom: -2px;
-  left: -2px;
+  bottom: -3px;
+  left: -3px;
   cursor: sw-resize;
 }
 
 .cropper-point.point-se {
-  right: -2px;
-  bottom: -2px;
+  right: -3px;
+  bottom: -3px;
   width: 20px;
   height: 20px;
   cursor: se-resize;
@@ -263,4 +258,19 @@
   max-height: none !important;
   filter: alpha(opacity=0);
   opacity: 0;
+}
+
+.cropper-move {
+  cursor: move;
+}
+
+.cropper-crop {
+  cursor: crosshair;
+}
+
+.cropper-disabled .cropper-canvas,
+.cropper-disabled .cropper-face,
+.cropper-disabled .cropper-line,
+.cropper-disabled .cropper-point {
+  cursor: not-allowed;
 }

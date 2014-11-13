@@ -15,6 +15,7 @@
   <input type="file" onchange="angular.element(this).scope().onFile(this.files[0])">
   <button ng-click="preview()">Show preview</button>
   <button ng-click="scale(200)">Scale to 200px width</button>
+  <label>Disabled <input type="checkbox" ng-model="options.disabled"></label>
 
   <br />
 

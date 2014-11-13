@@ -24,6 +24,12 @@ angular.module('ngCropper', ['ng'])
         shown = false;
         element.cropper('destroy');
       });
+
+      scope.$watch('options.disabled', function(disabled) {
+        if (!shown) return;
+        if (disabled) element.cropper('disable');
+        if (!disabled) element.cropper('enable');
+      });
     }
   };
 
