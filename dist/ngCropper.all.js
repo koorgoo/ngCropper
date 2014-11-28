@@ -1533,7 +1533,6 @@ angular.module('ngCropper', ['ng'])
 
       scope.$watch('options.disabled', function(disabled) {
         if (!shown) return;
-        console.log('disable:', disabled);
         if (disabled) element.cropper('disable');
         if (!disabled) element.cropper('enable');
       });
