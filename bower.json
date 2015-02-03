@@ -10,6 +10,9 @@
     "Dima Kurguzov <koorgoo@gmail.com>"
   ],
   "license": "MIT",
+  "dependencies": {
+    "cropper": "~0.7.7"
+  },
   "devDependencies": {
     "angular": "~1.2.26",
     "jquery": "~2.1.1",
