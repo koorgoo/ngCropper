@@ -1,8 +1,8 @@
 /*!
- * Cropper v0.7.2
+ * Cropper v0.7.9
  * https://github.com/fengyuanchen/cropper
  *
- * Copyright 2014 Fengyuan Chen
+ * Copyright 2014-2015 Fengyuan Chen
  * Released under the MIT license
  */
 
@@ -10,6 +10,9 @@
   if (typeof define === "function" && define.amd) {
     // AMD. Register as anonymous module.
     define(["jquery"], factory);
+  } else if (typeof exports === "object") {
+    // Node / CommonJS
+    factory(require("jquery"));
   } else {
     // Browser globals.
     factory(jQuery);
@@ -20,6 +23,7 @@
 
   var $window = $(window),
       $document = $(document),
+      location = window.location,
 
       // Constants
       TRUE = true,
@@ -34,7 +38,7 @@
       // RegExps
       REGEXP_DIRECTIVES = /^(e|n|w|s|ne|nw|sw|se|all|crop|move|zoom)$/,
       REGEXP_OPTIONS = /^(x|y|width|height)$/,
-      REGEXP_PROPERTIES = /^(naturalWidth|naturalHeight|width|height|aspectRatio|ratio)$/,
+      REGEXP_PROPERTIES = /^(naturalWidth|naturalHeight|width|height|aspectRatio|ratio|rotate)$/,
 
       // Classes
       CLASS_MODAL = "cropper-modal",
@@ -62,6 +66,31 @@
         return typeof n === "number";
       },
 
+      toArray = function (obj, offset) {
+        var args = [];
+
+        if (isNumber(offset)) { // It's necessary for IE8
+          args.push(offset);
+        }
+
+        return args.slice.apply(obj, args);
+      },
+
+      // Custom proxy to avoid jQuery's guid
+      proxy = function (fn, context) {
+        var args = toArray(arguments, 2);
+
+        return function () {
+          return fn.apply(context, args.concat(toArray(arguments)));
+        };
+      },
+
+      addTimestamp = function (url) {
+        var timestamp = "timestamp=" + (new Date()).getTime();
+
+        return (url + (url.indexOf("?") === -1 ? "?" : "&") + timestamp);
+      },
+
       // Constructor
       Cropper = function (element, options) {
         this.element = element;
@@ -78,7 +107,6 @@
       },
 
       // Others
-      round = Math.round,
       sqrt = Math.sqrt,
       min = Math.min,
       max = Math.max,
@@ -103,6 +131,10 @@
             defaults[i] = abs(num(n)) || NAN; // 0 -> NaN
             break;
 
+          case "autoCropArea":
+            defaults[i] = abs(num(n)) || 0.8; // 0 | NaN -> 0.8
+            break;
+
           case "minWidth":
           case "minHeight":
             defaults[i] = abs(num(n)) || 0; // NaN -> 0
@@ -110,7 +142,7 @@
 
           case "maxWidth":
           case "maxHeight":
-            defaults[i] = abs(num(n)) || INFINITY; // NaN -> Infinity
+            defaults[i] = abs(num(n)) || INFINITY; // 0 | NaN -> Infinity
             break;
 
           // No default
@@ -130,11 +162,12 @@
           $this = this.$element,
           element = this.element,
           image = this.image,
+          crossOrigin = "",
           $clone,
           url;
 
       if ($this.is("img")) {
-        url = $this.attr("src");
+        url = $this.prop("src");
       } else if ($this.is("canvas") && this.support.canvas) {
         url = element.toDataURL();
       }
@@ -143,17 +176,17 @@
         return;
       }
 
-      if (this.$clone) {
-        this.$clone.remove();
-      }
-
       // Reset image rotate degree
       if (this.replaced) {
-        this.replaced = FALSE;
         image.rotate = 0;
       }
 
-      this.$clone = ($clone = $('<img src="' + url + '">'));
+      if (this.defaults.checkImageOrigin && this.isCrossOriginURL(url)) {
+        crossOrigin = " crossOrigin";
+        url = addTimestamp(url); // Bust cache (#119, #148)
+      }
+
+      this.$clone = ($clone = $("<img" + crossOrigin + ' src="' + url + '">'));
 
       $clone.one("load", function () {
         image.naturalWidth = this.naturalWidth || $clone.width();
@@ -167,6 +200,16 @@
 
       // Hide and prepend the clone iamge to the document body (Don't append to).
       $clone.addClass(CLASS_INVISIBLE).prependTo("body");
+    },
+
+    isCrossOriginURL: function (url) {
+      var parts = url.match(/^(https?:)\/\/([^\:\/\?#]+):?(\d*)/i);
+
+      if (parts && (parts[1] !== location.protocol || parts[2] !== location.hostname || parts[3] !== location.port)) {
+        return TRUE;
+      }
+
+      return FALSE;
     },
 
     build: function () {
@@ -203,6 +246,10 @@
       // Save original image for rotation
       if (!this.rotated) {
         this.$original = this.$clone.clone();
+
+        // Append the image to document to avoid "NS_ERROR_NOT_AVAILABLE" error on Firefox when call the "drawImage" method.
+        this.$original.addClass(CLASS_HIDDEN).prependTo(this.$cropper);
+
         this.originalImage = $.extend({}, this.image);
       }
 
@@ -214,19 +261,18 @@
       this.$viewer = $cropper.find(".cropper-viewer");
 
       defaults.autoCrop ? (this.cropped = TRUE) : this.$dragger.addClass(CLASS_HIDDEN);
-      defaults.dragCrop && this.setDragMode("crop");
       defaults.modal && this.$canvas.addClass(CLASS_MODAL);
       !defaults.dashed && this.$dragger.find(".cropper-dashed").addClass(CLASS_HIDDEN);
-      !defaults.movable && this.$dragger.find(".cropper-face").addClass(CLASS_HIDDEN);
+      !defaults.movable && this.$dragger.find(".cropper-face").data(STRING_DIRECTIVE, "move");
       !defaults.resizable && this.$dragger.find(".cropper-line, .cropper-point").addClass(CLASS_HIDDEN);
-
-      this.$scope = defaults.multiple ? this.$cropper : $document;
 
       this.addListeners();
       this.initPreview();
 
-      this.built = TRUE;
+      this.built = TRUE; // Set `true` before update
+      defaults.dragCrop && this.setDragMode("crop"); // Set after built
       this.update();
+      this.replaced = FALSE; // Reset to `false` after update
 
       $this.one(EVENT_BUILT, defaults.built); // Only trigger once
       $this.trigger(EVENT_BUILT);
@@ -279,21 +325,30 @@
           top = dragger.top - image.top;
 
       this.$viewer.find("img").css({
-        width: round(width),
-        height: round(height),
-        marginLeft: -round(left),
-        marginTop: -round(top)
+        width: width,
+        height: height,
+        marginLeft: -left,
+        marginTop: -top
       });
 
       this.$preview.each(function () {
         var $this = $(this),
-            ratio = $this.width() / dragger.width;
+            data = $this.data(),
+            ratio = data.width / dragger.width,
+            newWidth = data.width,
+            newHeight = dragger.height * ratio;
 
-        $this.find("img").css({
-          width: round(width * ratio),
-          height: round(height * ratio),
-          marginLeft: -round(left * ratio),
-          marginTop: -round(top * ratio)
+        if (newHeight > data.height) {
+          ratio = data.height / dragger.height,
+          newWidth = dragger.width * ratio;
+          newHeight = data.height;
+        }
+
+        $this.width(newWidth).height(newHeight).find("img").css({
+          width: width * ratio,
+          height: height * ratio,
+          marginLeft: -left * ratio,
+          marginTop: -top * ratio
         });
       });
     },
@@ -302,39 +357,72 @@
       var defaults = this.defaults;
 
       this.$element.on(EVENT_DRAG_START, defaults.dragstart).on(EVENT_DRAG_MOVE, defaults.dragmove).on(EVENT_DRAG_END, defaults.dragend);
-      this.$cropper.on(EVENT_MOUSE_DOWN, (this._dragstart = $.proxy(this.dragstart, this))).on(EVENT_DBLCLICK, (this._dblclick = $.proxy(this.dblclick, this)));
-      defaults.zoomable && this.$cropper.on(EVENT_WHEEL, (this._wheel = $.proxy(this.wheel, this)));
-      this.$scope.on(EVENT_MOUSE_MOVE, (this._dragmove = $.proxy(this.dragmove, this))).on(EVENT_MOUSE_UP, (this._dragend = $.proxy(this.dragend, this)));
+      this.$cropper.on(EVENT_MOUSE_DOWN, $.proxy(this.dragstart, this)).on(EVENT_DBLCLICK, $.proxy(this.dblclick, this));
 
-      $window.on(EVENT_RESIZE, (this._resize = $.proxy(this.resize, this)));
+      if (defaults.zoomable) {
+        this.$cropper.on(EVENT_WHEEL, $.proxy(this.wheel, this));
+      }
+
+      if (defaults.multiple) {
+        this.$cropper.on(EVENT_MOUSE_MOVE, $.proxy(this.dragmove, this)).on(EVENT_MOUSE_UP, $.proxy(this.dragend, this));
+      } else {
+        $document.on(EVENT_MOUSE_MOVE, (this._dragmove = proxy(this.dragmove, this))).on(EVENT_MOUSE_UP, (this._dragend = proxy(this.dragend, this)));
+      }
+
+      $window.on(EVENT_RESIZE, (this._resize = proxy(this.resize, this)));
     },
 
     removeListeners: function () {
       var defaults = this.defaults;
 
       this.$element.off(EVENT_DRAG_START, defaults.dragstart).off(EVENT_DRAG_MOVE, defaults.dragmove).off(EVENT_DRAG_END, defaults.dragend);
-      this.$cropper.off(EVENT_MOUSE_DOWN, this._dragstart).off(EVENT_DBLCLICK, this._dblclick);
-      defaults.zoomable && this.$cropper.off(EVENT_WHEEL, this._wheel);
-      this.$scope.off(EVENT_MOUSE_MOVE, this._dragmove).off(EVENT_MOUSE_UP, this._dragend);
+      this.$cropper.off(EVENT_MOUSE_DOWN, this.dragstart).off(EVENT_DBLCLICK, this.dblclick);
+
+      if (defaults.zoomable) {
+        this.$cropper.off(EVENT_WHEEL, this.wheel);
+      }
+
+      if (defaults.multiple) {
+        this.$cropper.off(EVENT_MOUSE_MOVE, this.dragmove).off(EVENT_MOUSE_UP, this.dragend);
+      } else {
+        $document.off(EVENT_MOUSE_MOVE, this._dragmove).off(EVENT_MOUSE_UP, this._dragend);
+      }
 
       $window.off(EVENT_RESIZE, this._resize);
     },
 
     initPreview: function () {
-      var img = '<img src="' + this.url + '">';
+      var url = this.url;
 
       this.$preview = $(this.defaults.preview);
-      this.$preview.html(img);
-      this.$viewer.html(img);
+      this.$viewer.html('<img src="' + url + '">');
+
+      this.$preview.each(function () {
+        var $this = $(this);
+
+        $this.data({
+          width: $this.width(),
+          height: $this.height()
+        }).html('<img src="' + url + '" style="display:block;width:100%;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;">');
+      });
     },
 
     initContainer: function () {
-      var $container = this.$container;
+      var $this = this.$element,
+          $container = this.$container,
+          $cropper = this.$cropper,
+          defaults = this.defaults;
+
+      $cropper.addClass(CLASS_HIDDEN);
+      $this.removeClass(CLASS_HIDDEN);
 
       this.container = {
-        width: max($container.width(), 300),
-        height: max($container.height(), 150)
+        width: max($container.width(), defaults.minContainerWidth),
+        height: max($container.height(), defaults.minContainerHeight)
       };
+
+      $this.addClass(CLASS_HIDDEN);
+      $cropper.removeClass(CLASS_HIDDEN);
     },
 
     initCropper: function () {
@@ -361,10 +449,10 @@
       }
 
       this.$cropper.css({
-        width: round(cropper.width),
-        height: round(cropper.height),
-        left: round(cropper.left),
-        top: round(cropper.top)
+        width: cropper.width,
+        height: cropper.height,
+        left: cropper.left,
+        top: cropper.top
       });
 
       this.cropper = cropper;
@@ -388,7 +476,12 @@
       if (image._width !== cropper.width || image._height !== cropper.height) {
         $.extend(image, defaultImage);
       } else {
-        image = $.extend(defaultImage, image);
+        image = $.extend({}, defaultImage, image);
+
+        // Reset image ratio
+        if (this.replaced) {
+          image.ratio = defaultImage.ratio;
+        }
       }
 
       this.image = image;
@@ -407,10 +500,10 @@
       image.top = min(max(image.top, image._height - image.height), 0);
 
       this.$clone.css({
-        width: round(image.width),
-        height: round(image.height),
-        marginLeft: round(image.left),
-        marginTop: round(image.top)
+        width: image.width,
+        height: image.height,
+        marginLeft: image.left,
+        marginTop: image.top
       });
 
       if (mode) {
@@ -425,6 +518,7 @@
           // If not set, use the original aspect ratio of the image.
           aspectRatio = defaults.aspectRatio || this.image.aspectRatio,
           ratio = this.image.ratio,
+          autoCropDragger,
           dragger;
 
       if (((cropper.height * aspectRatio) - cropper.width) >= 0) {
@@ -478,15 +572,20 @@
       dragger.minHeight = min(dragger.maxHeight, dragger.minHeight);
 
       // Center the dragger by default
-      dragger.height *= 0.8;
-      dragger.width *= 0.8;
-      dragger.left = (cropper.width - dragger.width) / 2;
-      dragger.top = (cropper.height - dragger.height) / 2;
-      dragger.oldLeft = dragger.left;
-      dragger.oldTop = dragger.top;
+      autoCropDragger = $.extend({}, dragger);
 
-      this.defaultDragger = dragger;
-      this.dragger = $.extend({}, dragger);
+      // The width of auto crop area must large than minWidth, and the height too. (#164)
+      autoCropDragger.width = max(dragger.minWidth, dragger.width * defaults.autoCropArea);
+      autoCropDragger.height = max(dragger.minHeight, dragger.height * defaults.autoCropArea);
+      autoCropDragger.left = (cropper.width - autoCropDragger.width) / 2;
+      autoCropDragger.top = (cropper.height - autoCropDragger.height) / 2;
+
+      autoCropDragger.oldLeft = dragger.oldLeft = dragger.left;
+      autoCropDragger.oldTop = dragger.oldTop = dragger.top;
+
+      this.autoCropDragger = autoCropDragger;
+      this.defaultDragger = $.extend({}, dragger);
+      this.dragger = dragger;
     },
 
     renderDragger: function () {
@@ -516,20 +615,28 @@
 
       // Re-render the dragger
       this.dragger = dragger;
-      this.defaults.done(this.getData());
+
+      // #186
+      if (this.defaults.movable) {
+        this.$dragger.find(".cropper-face").data(STRING_DIRECTIVE, (dragger.width === cropper.width && dragger.height === cropper.height) ? "move" : "all");
+      }
+
+      if (!this.disabled) {
+        this.defaults.done(this.getData());
+      }
 
       this.$dragger.css({
-        width: round(dragger.width),
-        height: round(dragger.height),
-        left: round(dragger.left),
-        top: round(dragger.top)
+        width: dragger.width,
+        height: dragger.height,
+        left: dragger.left,
+        top: dragger.top
       });
 
       this.preview();
     },
 
     reset: function (deep) {
-      if (!this.cropped) {
+      if (!this.cropped || this.disabled) {
         return;
       }
 
@@ -544,7 +651,7 @@
     },
 
     clear: function () {
-      if (!this.cropped) {
+      if (!this.cropped || this.disabled) {
         return;
       }
 
@@ -565,14 +672,14 @@
       var $this = this.$element;
 
       if (!this.ready) {
-        return;
+        this.$clone.off("load").remove();
       }
 
       this.unbuild();
       $this.removeClass(CLASS_HIDDEN).removeData("cropper");
 
       if (this.rotated) {
-        $this.replaceWith(this.$original);
+        $this.attr("src", this.$original.attr("src"));
       }
     },
 
@@ -582,7 +689,7 @@
           element = this.element,
           context;
 
-      if (url && url !== this.url) {
+      if (!this.disabled && url && url !== this.url && url !== $this.attr("src")) {
         if (!rotated) {
           this.rotated = FALSE;
           this.replaced = TRUE;
@@ -611,12 +718,12 @@
           image = this.image,
           aspectRatio = this.defaults.aspectRatio;
 
-      if (!this.built || typeof data === STRING_UNDEFINED) {
+      if (!this.built || this.disabled || typeof data === STRING_UNDEFINED) {
         return;
       }
 
       if (data === NULL || $.isEmptyObject(data)) {
-        dragger = $.extend({}, this.defaultDragger);
+        dragger = $.extend({}, this.autoCropDragger);
       }
 
       if ($.isPlainObject(data) && !$.isEmptyObject(data)) {
@@ -658,7 +765,7 @@
       this.renderDragger();
     },
 
-    getData: function () {
+    getData: function (rounded) {
       var dragger = this.dragger,
           image = this.image,
           data = {};
@@ -671,13 +778,13 @@
           height: dragger.height
         };
 
-        data = this.transformData(data, TRUE);
+        data = this.transformData(data, TRUE, rounded);
       }
 
       return data;
     },
 
-    transformData: function (data, reverse) {
+    transformData: function (data, reversed, rounded) {
       var ratio = this.image.ratio,
           result = {};
 
@@ -685,8 +792,7 @@
         n = num(n);
 
         if (REGEXP_OPTIONS.test(i) && !isNaN(n)) {
-          // Not round when set data.
-          result[i] = reverse ? round(n / ratio) : n * ratio;
+          result[i] = reversed ? (rounded ? Math.round(n / ratio) : n / ratio) : n * ratio;
         }
       });
 
@@ -696,6 +802,10 @@
     setAspectRatio: function (aspectRatio) {
       var freeRatio = aspectRatio === "auto";
 
+      if (this.disabled) {
+        return;
+      }
+
       aspectRatio = num(aspectRatio);
 
       if (freeRatio || (!isNaN(aspectRatio) && aspectRatio > 0)) {
@@ -704,6 +814,7 @@
         if (this.built) {
           this.initDragger();
           this.renderDragger();
+          this.setData(this.defaults.data); // Reset to initial state
         }
       }
     },
@@ -722,16 +833,35 @@
       return data;
     },
 
-    getDataURL: function (type, option) {
+    getDataURL: function (options, type, quality) {
       var canvas = $("<canvas>")[0],
           data = this.getData(),
-          dataURL = "";
+          dataURL = "",
+          context;
+
+      if (!$.isPlainObject(options)) {
+        quality = type;
+        type = options;
+        options = {};
+      }
+
+      options = $.extend({
+        width: data.width,
+        height: data.height
+      }, options);
 
       if (this.cropped && this.support.canvas) {
-        canvas.width = data.width;
-        canvas.height = data.height;
-        canvas.getContext("2d").drawImage(this.$clone[0], data.x, data.y, data.width, data.height, 0, 0, data.width, data.height);
-        dataURL = canvas.toDataURL(type, option);
+        canvas.width = options.width;
+        canvas.height = options.height;
+        context = canvas.getContext("2d");
+
+        if (type === "image/jpeg") {
+          context.fillStyle = "#fff";
+          context.fillRect(0, 0, options.width, options.height);
+        }
+
+        context.drawImage(this.$clone[0], data.x, data.y, data.width, data.height, 0, 0, options.width, options.height);
+        dataURL = canvas.toDataURL(type, quality);
       }
 
       return dataURL;
@@ -757,10 +887,8 @@
           break;
 
         case "move":
-          if (defaults.movable) {
-            movable = TRUE;
-            $canvas.data(STRING_DIRECTIVE, mode);
-          }
+          movable = TRUE;
+          $canvas.data(STRING_DIRECTIVE, mode);
 
           break;
 
@@ -802,36 +930,22 @@
     },
 
     getRotatedDataURL: function (degree) {
-      var $image = this.$original.clone(),
-          canvas = $("<canvas>")[0],
+      var canvas = $("<canvas>")[0],
           context = canvas.getContext("2d"),
-          arc = degree * Math.PI / 180,
-          deg = abs(degree) % 180,
-          acuteAngle = deg > 90 ? (180 - deg) : deg,
-          acuteAngleArc = acuteAngle * Math.PI / 180,
           originalImage = this.originalImage,
           naturalWidth = originalImage.naturalWidth,
           naturalHeight = originalImage.naturalHeight,
-          width = abs(naturalWidth * cos(acuteAngleArc) + naturalHeight * sin(acuteAngleArc)),
-          height = abs(naturalWidth * sin(acuteAngleArc) + naturalHeight * cos(acuteAngleArc));
+          deg = abs(degree) % 180,
+          arc = (deg > 90 ? (180 - deg) : deg) * Math.PI / 180,
+          width = naturalWidth * cos(arc) + naturalHeight * sin(arc),
+          height = naturalWidth * sin(arc) + naturalHeight * cos(arc);
 
       canvas.width = width;
       canvas.height = height;
       context.save();
       context.translate(width / 2, height / 2);
-      context.rotate(arc);
-
-      // Append the image to document to avoid "NS_ERROR_NOT_AVAILABLE" error on Firefox when call the "drawImage" method.
-      $image.addClass(CLASS_INVISIBLE).prependTo(this.$cropper);
-
-      context.drawImage(
-        $image[0],
-        -naturalWidth / 2,
-        -naturalHeight / 2,
-        naturalWidth,
-        naturalHeight
-      );
-
+      context.rotate(degree * Math.PI / 180);
+      context.drawImage(this.$original[0], -naturalWidth / 2, -naturalHeight / 2, naturalWidth, naturalHeight);
       context.restore();
 
       return canvas.toDataURL();
@@ -892,11 +1006,7 @@
 
     wheel: function (event) {
       var e = event.originalEvent,
-          msDeltaY = 117.25, // IE
-          mozDelatY = 5, // Firefox
-          webkitDelatY = 166.66665649414062, // Chrome, Opera
-          zoomDelta = 0.1, // 10%
-          delta;
+          delta = 1;
 
       if (this.disabled) {
         return;
@@ -905,13 +1015,14 @@
       event.preventDefault();
 
       if (e.deltaY) {
-        delta = e.deltaY;
-        delta = delta % mozDelatY === 0 ? delta / mozDelatY : delta % msDeltaY === 0 ? delta / msDeltaY : delta / webkitDelatY;
-      } else {
-        delta = e.wheelDelta ? -e.wheelDelta / 120 : (e.detail ? e.detail / 3 : 0);
+        delta = e.deltaY > 0 ? 1 : -1;
+      } else if (e.wheelDelta) {
+        delta = -e.wheelDelta / 120;
+      } else if (e.detail) {
+        delta = e.detail > 0 ? 1 : -1;
       }
 
-      this.zoom(delta * zoomDelta);
+      this.zoom(delta * 0.1);
     },
 
     dragstart: function (event) {
@@ -1049,8 +1160,7 @@
           right = left + width,
           bottom = top + height,
           renderable = TRUE,
-          defaults = this.defaults,
-          aspectRatio = defaults.aspectRatio,
+          aspectRatio = this.defaults.aspectRatio,
           range = {
             x: this.endX - this.startX,
             y: this.endY - this.startY
@@ -1185,10 +1295,16 @@
             }
           }
 
-          if (height < 0) {
+          if (width < 0 && height < 0) {
             directive = "sw";
             height = 0;
             width = 0;
+          } else if (width < 0) {
+            directive = "nw";
+            width = 0;
+          } else if (height < 0) {
+            directive = "se";
+            height = 0;
           }
 
           break;
@@ -1228,10 +1344,16 @@
             }
           }
 
-          if (height < 0) {
+          if (width < 0 && height < 0) {
             directive = "se";
             height = 0;
             width = 0;
+          } else if (width < 0) {
+            directive = "ne";
+            width = 0;
+          } else if (height < 0) {
+            directive = "sw";
+            height = 0;
           }
 
           break;
@@ -1268,10 +1390,16 @@
             }
           }
 
-          if (width < 0) {
+          if (width < 0 && height < 0) {
             directive = "ne";
             height = 0;
             width = 0;
+          } else if (width < 0) {
+            directive = "se";
+            width = 0;
+          } else if (height < 0) {
+            directive = "nw";
+            height = 0;
           }
 
           break;
@@ -1305,10 +1433,16 @@
             }
           }
 
-          if (width < 0) {
+          if (width < 0 && height < 0) {
             directive = "nw";
             height = 0;
             width = 0;
+          } else if (width < 0) {
+            directive = "sw";
+            width = 0;
+          } else if (height < 0) {
+            directive = "ne";
+            height = 0;
           }
 
           break;
@@ -1319,27 +1453,24 @@
           image.top += range.y;
           this.renderImage("move");
           renderable = FALSE;
-
           break;
 
         // Scale image
         case "zoom":
-          if (defaults.zoomable) {
-            this.zoom(function (x, y, x1, y1, x2, y2) {
-              return (sqrt(x2 * x2 + y2 * y2) - sqrt(x1 * x1 + y1 * y1)) / sqrt(x * x + y * y);
-            }(
-              image.width,
-              image.height,
-              abs(this.startX - this.startX2),
-              abs(this.startY - this.startY2),
-              abs(this.endX - this.endX2),
-              abs(this.endY - this.endY2)
-            ));
+          this.zoom(function (x, y, x1, y1, x2, y2) {
+            return (sqrt(x2 * x2 + y2 * y2) - sqrt(x1 * x1 + y1 * y1)) / sqrt(x * x + y * y);
+          }(
+            image.width,
+            image.height,
+            abs(this.startX - this.startX2),
+            abs(this.startY - this.startY2),
+            abs(this.endX - this.endX2),
+            abs(this.endY - this.endY2)
+          ));
 
-            this.endX2 = this.startX2;
-            this.endY2 = this.startY2;
-          }
-
+          this.endX2 = this.startX2;
+          this.endY2 = this.startY2;
+          renderable = FALSE;
           break;
 
         // Crop image
@@ -1432,6 +1563,7 @@
   Cropper.DEFAULTS = {
     // Basic
     aspectRatio: "auto",
+    autoCropArea: 0.8, // 80%
     data: {
       // x: 0,
       // y: 0,
@@ -1451,12 +1583,15 @@
     resizable: TRUE,
     zoomable: TRUE,
     rotatable: TRUE,
+    checkImageOrigin: TRUE,
 
     // Dimensions
     minWidth: 0,
     minHeight: 0,
     maxWidth: INFINITY,
     maxHeight: INFINITY,
+    minContainerWidth: 300,
+    minContainerHeight: 150,
 
     // Events
     build: NULL,
@@ -1475,7 +1610,7 @@
 
   // Register as jQuery plugin
   $.fn.cropper = function (options) {
-    var args = [].slice.call(arguments, 1),
+    var args = toArray(arguments, 1),
         result;
 
     this.each(function () {

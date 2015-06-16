@@ -1,13 +1,13 @@
 MINIFY=node_modules/minify/bin/minify.js
-CROPPER_JS=cropper/dist/cropper.js
-CROPPER_CSS=cropper/dist/cropper.css
+CROPPER_JS=bower_components/cropper/dist/cropper.js
+CROPPER_CSS=bower_components/cropper/dist/cropper.css
 BROWSER=open -a "/Applications/Google Chrome.app"
 
 prep:
 	bower install
 	npm install
 
-dist:
+dist: prep
 	rm dist/*
 	cp ngCropper.js dist/ngCropper.js
 	$(MINIFY) dist/ngCropper.js > dist/ngCropper.min.js
