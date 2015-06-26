@@ -21,7 +21,10 @@
 
   <div ng-if="dataUrl" class="img-container">
     <img ng-if="dataUrl" ng-src="{{dataUrl}}" width="800"
-         ng-cropper ng-show="{{showEvent}}" ng-hide="{{hideEvent}}" ng-options="options">
+         ng-cropper
+         ng-cropper-show="showEvent"
+         ng-cropper-hide="hideEvent"
+         ng-cropper-options="options">
   </div>
 
   <div class="preview-container">

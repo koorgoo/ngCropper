@@ -46,7 +46,7 @@ angular.module('demo', ['ngCropper'])
   $scope.options = {
     maximize: true,
     aspectRatio: 2 / 1,
-    done: function(dataNew) {
+    crop: function(dataNew) {
       data = dataNew;
     }
   };

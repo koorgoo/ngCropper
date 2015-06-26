@@ -5,11 +5,15 @@ angular.module('ngCropper', ['ng'])
 .directive('ngCropper', ['$q', function($q) {
   return {
     restrict: 'A',
-    scope: {options: '=ngOptions'},
+    scope: {
+      options: '=ngCropperOptions',
+      showEvent: '=ngCropperShow',
+      hideEvent: '=ngCropperHide'
+    },
     link: function(scope, element, atts) {
       var shown = false;
 
-      scope.$on(atts.ngShow, function() {
+      scope.$on(scope.showEvent, function() {
         if (shown) return;
         shown = true;
 
@@ -19,7 +23,7 @@ angular.module('ngCropper', ['ng'])
           })
       });
 
-      scope.$on(atts.ngHide, function() {
+      scope.$on(scope.hideEvent, function() {
         if (!shown) return;
         shown = false;
         element.cropper('destroy');
