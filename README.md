@@ -28,9 +28,9 @@ app.controller('Main', function(Cropper) {
 ```html
 <img src="image.jpg"
      ng-cropper
-     ng-options="options"
-     ng-show="show.cropper"
-     ng-hide="hide.cropper">
+     ng-cropper-options="options"
+     ng-cropper-show="'show.cropper'"
+     ng-cropper-hide="'hide.cropper'">
 ```
 
 Read [Demo code](http://github.com/koorgoo/ngCropper/tree/master/demo) for detailed example.
