@@ -35,27 +35,11 @@ angular.module('ngCropper', ['ng'])
 
   function preprocess(options, img) {
     options = options || {};
-
-    var defer = $q.defer();
-    var toResolve = [passInitial(options)];
-
-    if (options.maximize) toResolve.push(maximizeSelection(options, img));
-
-    $q.all(toResolve).then(function(values) {
-      var lastUpdatedOptions = values[values.length-1];
-      defer.resolve(lastUpdatedOptions);
-    });
-
-    return defer.promise;
-  }
-
-  /**
-   * The only promise to resolve when no more processing promiseses passed.
-   */
-  function passInitial(options) {
-    var defer = $q.defer();
-    defer.resolve(options);
-    return defer.promise;
+    var result = $q.when(options); // No changes.
+    if (options.maximize) {
+      result = maximizeSelection(options, img);
+    }
+    return result;
   }
 
   /**
@@ -64,14 +48,10 @@ angular.module('ngCropper', ['ng'])
    * with respect to `aspectRatio`.
    */
   function maximizeSelection(options, img) {
-    var defer = $q.defer();
-
-    getRealSize(img).then(function(size) {
+    return getRealSize(img).then(function(size) {
       options.data = size;
-      defer.resolve(options);
+      return options;
     });
-
-    return defer.promise;
   }
 
   /**
@@ -114,30 +94,23 @@ angular.module('ngCropper', ['ng'])
   };
 
   this.crop = function(file, data) {
-    var defer = $q.defer();
-    var _decode = this.decode;
-
-    this.encode(file).then(_createImage).then(function(image) {
+    var _decodeBlob = this.decode;
+    return this.encode(file).then(_createImage).then(function(image) {
       var canvas = createCanvas(data);
       var context = canvas.getContext('2d');
 
       context.drawImage(image, data.x, data.y, data.width, data.height, 0, 0, data.width, data.height);
 
       var encoded = canvas.toDataURL(file.type);
-      var blob = _decode(encoded);
-
-      defer.resolve(blob);
       removeElement(canvas);
-    });
 
-    return defer.promise;
+      return _decodeBlob(encoded);
+    });
   };
 
   this.scale = function(file, data) {
-    var defer = $q.defer();
-    var _decode = this.decode;
-
-    this.encode(file).then(_createImage).then(function(image) {
+    var _decodeBlob = this.decode;
+    return this.encode(file).then(_createImage).then(function(image) {
       var heightOrig = image.height;
       var widthOrig = image.width;
       var ratio, height, width;
@@ -168,13 +141,10 @@ angular.module('ngCropper', ['ng'])
       context.drawImage(image, 0, 0, widthOrig, heightOrig, 0, 0, width, height);
 
       var encoded = canvas.toDataURL(file.type);
-      var blob = _decode(encoded);
-
-      defer.resolve(blob);
       removeElement(canvas);
-    });
 
-    return defer.promise;
+      return _decodeBlob(encoded);
+    });
   };
 
 
