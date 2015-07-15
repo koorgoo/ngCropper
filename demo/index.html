@@ -15,6 +15,7 @@
   <input type="file" onchange="angular.element(this).scope().onFile(this.files[0])">
   <button ng-click="preview()">Show preview</button>
   <button ng-click="scale(200)">Scale to 200px width</button>
+  <button ng-click="clear()">Clear selection</button>
   <label>Disabled <input type="checkbox" ng-model="options.disabled"></label>
 
   <br />
@@ -22,6 +23,7 @@
   <div ng-if="dataUrl" class="img-container">
     <img ng-if="dataUrl" ng-src="{{dataUrl}}" width="800"
          ng-cropper
+         ng-cropper-proxy="cropperProxy"
          ng-cropper-show="showEvent"
          ng-cropper-hide="hideEvent"
          ng-cropper-options="options">

@@ -19,6 +19,15 @@ angular.module('demo', ['ngCropper'])
   };
 
   /**
+   * Croppers container object should be created in controller's scope
+   * for updates by directive via prototypal inheritance.
+   * Pass a full proxy name to the `ng-cropper-proxy` directive attribute to
+   * enable proxing.
+   */
+  $scope.cropper = {};
+  $scope.cropperProxy = 'cropper.first';
+
+  /**
    * When there is a cropped image to show encode it to base64 string and
    * use as a source for an image element.
    */
@@ -27,6 +36,15 @@ angular.module('demo', ['ngCropper'])
     Cropper.crop(file, data).then(Cropper.encode).then(function(dataUrl) {
       ($scope.preview || ($scope.preview = {})).dataUrl = dataUrl;
     });
+  };
+
+  /**
+   * Use cropper function proxy to call methods of the plugin.
+   * See https://github.com/fengyuanchen/cropper#methods
+   */
+  $scope.clear = function(degrees) {
+    if (!$scope.cropper.first) return;
+    $scope.cropper.first('clear');
   };
 
   $scope.scale = function(width) {
@@ -55,7 +73,7 @@ angular.module('demo', ['ngCropper'])
    * Showing (initializing) and hiding (destroying) of a cropper are started by
    * events. The scope of the `ng-cropper` directive is derived from the scope of
    * the controller. When initializing the `ng-cropper` directive adds two handlers
-   * listening to events passed by `ng-show` & `ng-hide` attributes.
+   * listening to events passed by `ng-cropper-show` & `ng-cropper-hide` attributes.
    * To show or hide a cropper `$broadcast` a proper event.
    */
   $scope.showEvent = 'show';

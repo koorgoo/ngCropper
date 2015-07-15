@@ -2093,11 +2093,12 @@
 'use strict';
 
 angular.module('ngCropper', ['ng'])
-.directive('ngCropper', ['$q', function($q) {
+.directive('ngCropper', ['$q', '$parse', function($q, $parse) {
   return {
     restrict: 'A',
     scope: {
       options: '=ngCropperOptions',
+      proxy: '=ngCropperProxy', // Optional.
       showEvent: '=ngCropperShow',
       hideEvent: '=ngCropperHide'
     },
@@ -2110,9 +2111,16 @@ angular.module('ngCropper', ['ng'])
 
         preprocess(scope.options, element[0])
           .then(function(options) {
+            setProxy(element);
             element.cropper(options);
           })
       });
+
+      function setProxy(element) {
+        if (!scope.proxy) return;
+        var setter = $parse(scope.proxy).assign;
+        setter(scope.$parent, element.cropper.bind(element));
+      }
 
       scope.$on(scope.hideEvent, function() {
         if (!shown) return;
