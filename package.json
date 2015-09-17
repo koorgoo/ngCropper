@@ -1,4 +1,5 @@
 {
+  "name": "ngCropper",
   "devDependencies": {
     "minify": "^1.0.4"
   }
