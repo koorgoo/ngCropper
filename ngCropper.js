@@ -86,11 +86,17 @@ angular.module('ngCropper', ['ng'])
 
   this.encode = function(blob) {
     var defer = $q.defer();
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      defer.resolve(e.target.result);
-    };
-    reader.readAsDataURL(blob);
+
+    if (blob instanceof Blob) {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        defer.resolve(e.target.result);
+      };
+      reader.readAsDataURL(blob);
+    } else {
+      defer.resolve(blob);
+    }
+
     return defer.promise;
   };
 
