@@ -15,6 +15,7 @@ angular.module('demo', ['ngCropper'])
     Cropper.encode((file = blob)).then(function(dataUrl) {
       $scope.dataUrl = dataUrl;
       $timeout(showCropper);  // wait for $digest to set image's src
+      $timeout(hideCropper);
     });
   };
 
@@ -81,7 +82,6 @@ angular.module('demo', ['ngCropper'])
 
   function showCropper() { $scope.$broadcast($scope.showEvent); }
   function hideCropper() { $scope.$broadcast($scope.hideEvent); }
-
 });
 
 })();
