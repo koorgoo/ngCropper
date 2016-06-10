@@ -2121,6 +2121,10 @@ angular.module('ngCropper', ['ng'])
         var setter = $parse(scope.proxy).assign;
         setter(scope.$parent, element.cropper.bind(element));
       }
+      
+      scope.$watch('options.aspectRatio', function() {
+        element.cropper('destroy').cropper(scope.options);
+      }, true);
 
       scope.$on(scope.hideEvent, function() {
         if (!shown) return;
