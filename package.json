@@ -1,7 +1,8 @@
 {
-  "name": "ngCropper",
-  "version": "0.4.1",
+  "name": "ngCropperjs",
+  "version": "1.0.0",
+  "license": "MIT",
   "devDependencies": {
-    "minify": "^1.0.4"
+    "minify": "^2.0.13"
   }
 }
