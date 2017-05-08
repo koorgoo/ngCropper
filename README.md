@@ -1,7 +1,7 @@
-# ngCropper
+# ngCropperjs
 
-AngularJS module for https://github.com/fengyuanchen/cropper jQuery plugin.
-
+AngularJS module for https://github.com/fengyuanchen/cropperjs.
+Fork and drop-in replacement of https://github.com/koorgoo/ngCropper
 
 ### Install
 

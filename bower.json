@@ -11,11 +11,10 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "angular": "~1.4.1"
+    "angular": "~1.6.4",
+    "cropperjs": "^0.8.1"
   },
   "devDependencies": {
-    "cropper": "~0.10.0",
-    "jquery": "~2.1.1",
     "mocha": "~1.21.4",
     "chai": "~1.9.2"
   }

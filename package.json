@@ -1,6 +1,6 @@
 {
-  "name": "ngCropper",
-  "version": "0.4.1",
+  "name": "ngCropperjs",
+  "version": "1.0.0",
   "devDependencies": {
     "minify": "^1.0.4"
   }

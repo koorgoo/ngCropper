@@ -1,6 +1,6 @@
 MINIFY=node_modules/minify/bin/minify.js
-CROPPER_JS=bower_components/cropper/dist/cropper.js
-CROPPER_CSS=bower_components/cropper/dist/cropper.css
+CROPPER_JS=bower_components/cropperjs/dist/cropper.js
+CROPPER_CSS=bower_components/cropperjs/dist/cropper.css
 BROWSER=open -a "/Applications/Google Chrome.app"
 
 prep:
@@ -9,13 +9,13 @@ prep:
 
 dist: prep
 	rm dist/*
-	cp ngCropper.js dist/ngCropper.js
-	$(MINIFY) dist/ngCropper.js > dist/ngCropper.min.js
-	cp $(CROPPER_JS) dist/ngCropper.all.js
-	cat ngCropper.js >> dist/ngCropper.all.js
-	cp $(CROPPER_CSS) dist/ngCropper.all.css
-	$(MINIFY) dist/ngCropper.all.js > dist/ngCropper.all.min.js
-	$(MINIFY) dist/ngCropper.all.css > dist/ngCropper.all.min.css
+	cp ngCropperjs.js dist/ngCropperjs.js
+	$(MINIFY) dist/ngCropperjs.js > dist/ngCropperjs.min.js
+	cp $(CROPPER_JS) dist/ngCropperjs.all.js
+	cat ngCropperjs.js >> dist/ngCropperjs.all.js
+	cp $(CROPPER_CSS) dist/ngCropperjs.all.css
+	$(MINIFY) dist/ngCropperjs.all.js > dist/ngCropperjs.all.min.js
+	$(MINIFY) dist/ngCropperjs.all.css > dist/ngCropperjs.all.min.css
 
 test:
 	$(BROWSER) test/index.html
