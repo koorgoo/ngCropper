@@ -7,12 +7,14 @@ angular.module('ngCropper', ['ng'])
     restrict: 'A',
     scope: {
       options: '=ngCropperOptions',
-      proxy: '=ngCropperProxy', // Optional.
       showEvent: '=ngCropperShow',
-      hideEvent: '=ngCropperHide'
+      hideEvent: '=ngCropperHide',
+      proxy: '=?ngCropperProxy', // Optional.
     },
     link: function(scope, element, atts) {
       var shown = false;
+
+      var cropperInstance;
 
       scope.$on(scope.showEvent, function() {
         if (shown) return;
@@ -20,27 +22,28 @@ angular.module('ngCropper', ['ng'])
 
         preprocess(scope.options, element[0])
           .then(function(options) {
-            setProxy(element);
-            element.cropper(options);
+            cropperInstance= new Cropper(element[0], options);
+            setProxy();
           })
       });
 
-      function setProxy(element) {
+      function setProxy() {
         if (!scope.proxy) return;
-        var setter = $parse(scope.proxy).assign;
-        setter(scope.$parent, element.cropper.bind(element));
+        $parse(scope.proxy).assign(scope.$parent, function(action) {
+          cropperInstance[action]();
+        });
       }
 
       scope.$on(scope.hideEvent, function() {
         if (!shown) return;
         shown = false;
-        element.cropper('destroy');
+        cropperInstance.destroy();
       });
 
       scope.$watch('options.disabled', function(disabled) {
         if (!shown) return;
-        if (disabled) element.cropper('disable');
-        if (!disabled) element.cropper('enable');
+        if (disabled) cropperInstance.disable();
+        if (!disabled) cropperInstance.enable();
       });
     }
   };
@@ -50,6 +53,12 @@ angular.module('ngCropper', ['ng'])
     var result = $q.when(options); // No changes.
     if (options.maximize) {
       result = maximizeSelection(options, img);
+    }
+    if (options.crop) {
+      var oldCallback= options.crop;
+      options.crop= function(data) {
+        oldCallback(data.detail);
+      }
     }
     return result;
   }

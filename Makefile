@@ -12,6 +12,7 @@ dist: prep
 	cp ngCropperjs.js dist/ngCropperjs.js
 	$(MINIFY) dist/ngCropperjs.js > dist/ngCropperjs.min.js
 	cp $(CROPPER_JS) dist/ngCropperjs.all.js
+	echo >> dist/ngCropperjs.all.js
 	cat ngCropperjs.js >> dist/ngCropperjs.all.js
 	cp $(CROPPER_CSS) dist/ngCropperjs.all.css
 	$(MINIFY) dist/ngCropperjs.all.js > dist/ngCropperjs.all.min.js

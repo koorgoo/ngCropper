@@ -1,12 +1,13 @@
 {
-  "name": "ng-cropper",
+  "name": "ng-cropperjs",
   "main": [
-    "dist/ngCropper.all.js",
+    "dist/ngCropperjs.all.js",
     "dist/ngCropper.all.css"
   ],
-  "version": "0.4.1",
+  "version": "1.0.0",
   "homepage": "https://github.com/koorgoo/ngCropper",
   "authors": [
+    "Johannes Zinnau <johannes@johnimedia.de>",
     "Dima Kurguzov <koorgoo@gmail.com>"
   ],
   "license": "MIT",
